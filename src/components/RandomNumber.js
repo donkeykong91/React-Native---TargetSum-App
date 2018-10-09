@@ -16,13 +16,6 @@ class RandomNumber extends React.Component {
   };
 
 
-  state = {
-
-    selectedNumbers: [],
-
-  }
-
-
   handlePress = () => {
 
     console.log(this.props.number);

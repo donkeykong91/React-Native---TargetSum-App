@@ -18,7 +18,7 @@ class Game extends React.Component {
 
   state = {
 
-    selectedNumbers: [0, 4],
+    selectedNumbers: [],
 
   }
 
@@ -45,6 +45,27 @@ class Game extends React.Component {
   isNumberSelected = (numberIndex) => {
 
     return this.state.selectedNumbers.indexOf(numberIndex) >= 0;
+
+  }
+
+
+  selectNumber = (numberIndex) => {
+
+    this.setState((prevState) => {
+
+      return {
+
+        selectedNumbers: [
+
+          ...prevState.selectedNumbers,
+
+          numberIndex
+
+        ]
+
+      };
+
+    });
 
   }
 
