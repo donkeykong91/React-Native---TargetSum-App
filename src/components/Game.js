@@ -93,9 +93,13 @@ class Game extends React.Component {
 
                   key={index}
 
+                  id={index}
+
                   number={randomNumber}
 
-                  isSelected={this.isNumberSelected(index)}
+                  isDisabled={this.isNumberSelected(index)}
+
+                  onPress={this.selectNumber}
 
                 />
 
