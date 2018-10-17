@@ -9,7 +9,7 @@ class App extends React.Component {
 
     return (
 
-      <Game randomNumberCount={6} />
+      <Game randomNumberCount={6} initialSeconds={10}/>
 
     );
 
