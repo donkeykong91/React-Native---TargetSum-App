@@ -6,6 +6,8 @@ import PropTypes from 'prop-types';
 
 import RandomNumber from './RandomNumber';
 
+import shuffle from "lodash.shuffle";
+
 
 class Game extends React.Component {
 
@@ -13,12 +15,16 @@ class Game extends React.Component {
 
     randomNumberCount: PropTypes.number.isRequired,
 
+    initialSeconds: PropTypes.number.isRequired,
+
   };
 
 
   state = {
 
-    selectedNumbers: [],
+    selectedIds: [],
+
+    remainingSeconds: this.props.initialSeconds,
 
   }
 
@@ -31,6 +37,7 @@ class Game extends React.Component {
 
                       });
 
+
   target = this.randomNumbers
 
             .slice(0, this.props.randomNumberCount - 2)
@@ -42,9 +49,87 @@ class Game extends React.Component {
             }, 0);
 
 
+  gameStatus = "PLAYING";
+
+
+  forcedUpdate = false;
+
+
+  shuffledRandomNumbers = shuffle(this.randomNumbers);
+
+
+  componentDidMount() {
+
+    this.intervalId = setInterval(() => {
+
+      this.setState(function (prevState) {
+
+        return {
+
+          remainingSeconds: prevState.remainingSeconds - 1
+
+        };
+
+      }, () => {
+
+        if (this.state.remainingSeconds === 0) {
+
+          clearInterval(this.intervalId);
+
+        }
+
+      });
+
+    }, 1000);
+
+  }
+
+
+  getSnapshotBeforeUpdate(previousProps, previousState) {
+
+    if (previousState.selectedIds !== this.state.selectedIds ||
+        this.state.remainingSeconds === 0) {
+
+      this.gameStatus = this.calcGameStatus();
+
+      return this.gameStatus;
+
+    }
+
+    return null;
+
+  }
+
+
+  componentDidUpdate(snapShot) {
+
+    if (this.gameStatus !== "PLAYING" && !this.forcedUpdate) {
+
+      this.forcedUpdate = true;
+
+      clearInterval(this.intervalId);
+
+      this.forceUpdate();
+
+    } else if (!snapShot) {
+
+      return;
+
+    }
+
+  }
+
+
+  componentWillUnmount() {
+
+    clearInterval(this.intervalId);
+
+  }
+
+
   isNumberSelected = (numberIndex) => {
 
-    return this.state.selectedNumbers.indexOf(numberIndex) >= 0;
+    return this.state.selectedIds.indexOf(numberIndex) >= 0;
 
   }
 
@@ -55,9 +140,9 @@ class Game extends React.Component {
 
       return {
 
-        selectedNumbers: [
+        selectedIds: [
 
-          ...prevState.selectedNumbers,
+          ...prevState.selectedIds,
 
           numberIndex
 
@@ -70,14 +155,52 @@ class Game extends React.Component {
   }
 
 
-  //TODO: Shuffle the random numbers
+  calcGameStatus = () => {
+
+    console.log("calcGameStatus");
+
+    const sumSelected = this.state.selectedIds.reduce((accumulator, current) => {
+
+      return accumulator + this.shuffledRandomNumbers[current];
+
+    }, 0);
+
+    if (this.state.remainingSeconds === 0) {
+
+      return "LOST";
+
+    }
+
+    if (sumSelected < this.target) {
+
+      return "PLAYING";
+
+    }
+
+    if (sumSelected === this.target) {
+
+      return "WON";
+
+    }
+
+    if (sumSelected > this.target) {
+
+      return "LOST";
+
+    }
+
+  };
+
+
   render() {
+
+    const gameStatus = this.gameStatus;
 
     return (
 
       <View style={styles.container}>
 
-        <Text style={styles.target}>
+        <Text style={[styles.target, styles[`STATUS_${gameStatus}`]]}>
 
           {this.target}
 
@@ -85,7 +208,7 @@ class Game extends React.Component {
 
         <View style={styles.randomContainer}>
 
-          {this.randomNumbers.map( (randomNumber, index) => {
+          {this.shuffledRandomNumbers.map( (randomNumber, index) => {
 
             return (
 
@@ -97,7 +220,7 @@ class Game extends React.Component {
 
                   number={randomNumber}
 
-                  isDisabled={this.isNumberSelected(index)}
+                  isDisabled={this.isNumberSelected(index) || gameStatus !== "PLAYING"}
 
                   onPress={this.selectNumber}
 
@@ -108,6 +231,8 @@ class Game extends React.Component {
           })}
 
         </View>
+
+        <Text>{this.state.remainingSeconds}</Text>
 
       </View>
 
@@ -133,8 +258,6 @@ const styles = StyleSheet.create({
   target: {
 
     fontSize: 50,
-
-    backgroundColor: "#bbb",
 
     marginHorizontal: 50,
 
@@ -168,7 +291,25 @@ const styles = StyleSheet.create({
 
     textAlign: 'center',
 
-  }
+  },
+
+  STATUS_PLAYING: {
+
+    backgroundColor: "#bbb",
+
+  },
+
+  STATUS_WON: {
+
+    backgroundColor: "green",
+
+  },
+
+  STATUS_LOST: {
+
+    backgroundColor: "red",
+
+  },
 
 });
 
